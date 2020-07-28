@@ -1,4 +1,4 @@
-from video_editor.actions import CutAction, CompressAction, RemoveAudioAction, SpeedupAction
+from video_editor.actions import CutAction, CompressAction, RemoveAudioAction, SpeedupAction,WebpAction
 from video_editor.utils import join_video_list
 import tempfile
 from shutil import copyfile

@@ -1,8 +1,10 @@
 from PyQt5.QtGui import QFont, QPainter
-from PyQt5.QtCore import Qt, QUrl, QSize
+from PyQt5.QtCore import Qt, QUrl, QSize,QFileInfo
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import *
+from video_editor.qrangeslider import QRangeSlider
+from PyQt5 import QtCore, QtGui, QtWidgets,QtMultimedia,QtMultimediaWidgets
 
 from video_editor.editor import VideoEditor
 import threading
@@ -18,33 +20,35 @@ class VideoPlayer(QWidget):
         self.videoEditor = None
 
         # Font
-        self.setFont(QFont("Noto Sans", 10))
+        # self.setFont(QFont("Noto Sans", 10))
 
         # Edit window
-        self.editWindow = EditWidget(self)
+        # self.editWindow = EditWidget(self)
 
         # Video widget and media player
         videoWidget = QVideoWidget()
         videoWidget.setStyleSheet('background: black')
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.mediaPlayer.setVideoOutput(videoWidget)
-        self.mediaPlayer.stateChanged.connect(self.mediaStateChanged)
+        # self.mediaPlayer.stateChanged.connect(self.mediaStateChanged)
         self.mediaPlayer.positionChanged.connect(self.positionChanged)
         self.mediaPlayer.durationChanged.connect(self.durationChanged)
         self.mediaPlayer.error.connect(self.handleError)
 
         # Play button
-        self.playButton = QPushButton()
-        self.playButton.setEnabled(False)
-        self.playButton.setFixedHeight(24)
-        self.playButton.setIconSize(QSize(16, 16))
-        self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
-        self.playButton.clicked.connect(self.togglePlay)
+        # self.playButton = QPushButton()
+        # self.playButton.setEnabled(False)
+        # self.playButton.setFixedHeight(24)
+        # self.playButton.setIconSize(QSize(10, 10))
+        # self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        # self.playButton.clicked.connect(self.togglePlay)
 
         # Time slider
         self.positionSlider = QSliderMarker(Qt.Horizontal)
         self.positionSlider.setRange(0, 0)
         self.positionSlider.sliderMoved.connect(self.setPosition)
+        # self.positionSlider = QRangeSlider()
+        # self.positionSlider.setStart(self.setPosition)
 
         # Time label
         self.timeLabel = QLabel("- - : - - : - -")
@@ -64,11 +68,11 @@ class VideoPlayer(QWidget):
         self.splitButton.clicked.connect(self.split)
 
         # Export selected button
-        self.exportAllButton = QPushButton("Export selected splits")
-        self.exportAllButton.setToolTip("Join all selected splits in a single video file")
-        self.exportAllButton.setEnabled(False)
-        self.exportAllButton.setFixedHeight(24)
-        self.exportAllButton.clicked.connect(self.exportVideo)
+        # self.exportAllButton = QPushButton("Export selected splits")
+        # self.exportAllButton.setToolTip("Join all selected splits in a single video file")
+        # self.exportAllButton.setEnabled(False)
+        # self.exportAllButton.setFixedHeight(24)
+        # self.exportAllButton.clicked.connect(self.exportVideo)
 
         # Status bar
         self.statusBar = QStatusBar()
@@ -78,7 +82,7 @@ class VideoPlayer(QWidget):
         # Controls layout [open, play and slider]
         controlLayout = QHBoxLayout()
         controlLayout.setContentsMargins(0, 0, 0, 0)
-        controlLayout.addWidget(self.playButton)
+        # controlLayout.addWidget(self.playButton)
         controlLayout.addWidget(self.positionSlider)
         controlLayout.addWidget(self.timeLabel)
 
@@ -87,7 +91,7 @@ class VideoPlayer(QWidget):
         editorLayout.setContentsMargins(0, 0, 0, 0)
         editorLayout.addWidget(openButton)
         editorLayout.addWidget(self.splitButton)
-        editorLayout.addWidget(self.exportAllButton)
+        # editorLayout.addWidget(self.exportAllButton)
         editorLayout.addStretch(1)
 
         # Splits layout
@@ -119,14 +123,19 @@ class VideoPlayer(QWidget):
     def loadVideoFile(self):
         fileName, _ = QFileDialog.getOpenFileName(self, "Choose video file", ".",
                                                   "Video Files (*.mp4 *.flv *.ts *.mkv *.avi)")
-
+        # fileName = QFileDialog.getOpenFileUrl()[0]
+        print(fileName)
         if fileName != '':
             self.videoPath = fileName
             self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(fileName)))
-            self.playButton.setEnabled(True)
+            # self.mediaPlayer.setMedia(QMediaContent(fileName))
+            # self.playButton.setEnabled(True)
             self.splitButton.setEnabled(True)
-            self.exportAllButton.setEnabled(True)
+            # self.exportAllButton.setEnabled(True)
             self.statusBar.showMessage(fileName)
+            self.positionSlider.update()
+            # self.mediaPlayer.play()
+            self.mediaPlayer.pause()
             # self.togglePlay()
 
     def getSplitWidgets(self):
@@ -216,7 +225,7 @@ class VideoPlayer(QWidget):
     def handleError(self):
         self.playButton.setEnabled(False)
         self.splitButton.setEnabled(False)
-        self.exportAllButton.setEnabled(False)
+        # self.exportAllButton.setEnabled(False)
         self.statusBar.showMessage("Error: " + self.mediaPlayer.errorString())
 
 
@@ -270,8 +279,8 @@ class SplitWidget(QPushButton):
             rightMerge = menu.addAction("Merge with right")
         if self.splitId > 0:
             leftMerge = menu.addAction("Merge with left")
-        mark = menu.addAction("Unselect" if self.marked else "Select")
-        edit = menu.addAction("Edit")
+        # mark = menu.addAction("Unselect" if self.marked else "Select")
+        # edit = menu.addAction("Edit")
         save = menu.addAction("Save to file")
         action = menu.exec_(self.mapToGlobal(event.pos()))
         if action == rightMerge:
@@ -289,10 +298,10 @@ class SplitWidget(QPushButton):
                 t.setDaemon(True)
                 t.start()
 
-        elif action == mark:
-            self.toggleMark()
-        elif action == edit:
-            self.parent().openEditWindow(self.splitId)
+        # elif action == mark:
+        #     self.toggleMark()
+        # elif action == edit:
+        #     self.parent().openEditWindow(self.splitId)
 
     def exportSplit(self, filename):
         self.setDisabled(True)

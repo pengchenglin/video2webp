@@ -34,6 +34,26 @@ class CutAction(BaseAction):
         return run_command(cmd)
 
 
+class WebpAction(BaseAction):
+    def __init__(self, input_path, output_path, start_time, end_time):
+        super().__init__(input_path, output_path)
+        # self.reencode = reencode
+        self.start_time = start_time
+        self.end_time = end_time
+
+    def run(self):
+        cmd = '{ffmpeg} -ss {s} -to {d} -i "{fn}" ' \
+              '-vcodec libwebp -r 20  -lossless 1  -loop 0 -preset default -an -vsync 0 -vf scale=480:-1  ' \
+              '"{o}"'.format(
+            ffmpeg=get_ffmpeg_binary(),
+            fn=self.input,
+            s=get_time_str(self.start_time),
+            d=get_time_str(self.end_time),
+            # re="" if self.reencode else "-c copy",
+            o=self.output,
+        )
+        return run_command(cmd)
+
 class CompressAction(BaseAction):
 
     def __init__(self, input_path, output_path):
@@ -86,3 +106,14 @@ class SpeedupAction(BaseAction):
             o=self.output,
         )
         return run_command(cmd)
+
+
+def get_time_str(time):
+    hh = time // 3600000
+    mm = (time % 3600000) // 60000
+    ss = ((time % 3600000) % 60000 )/1000
+    print(hh,mm,ss)
+    return "{:02d}:{:02d}:{:.3f}".format(hh, mm, ss)
+
+if __name__ == '__main__':
+    print(get_time_str(3723067))
