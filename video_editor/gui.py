@@ -30,18 +30,18 @@ class VideoPlayer(QWidget):
         videoWidget.setStyleSheet('background: black')
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.mediaPlayer.setVideoOutput(videoWidget)
-        # self.mediaPlayer.stateChanged.connect(self.mediaStateChanged)
+        self.mediaPlayer.stateChanged.connect(self.mediaStateChanged)
         self.mediaPlayer.positionChanged.connect(self.positionChanged)
         self.mediaPlayer.durationChanged.connect(self.durationChanged)
         self.mediaPlayer.error.connect(self.handleError)
 
         # Play button
-        # self.playButton = QPushButton()
-        # self.playButton.setEnabled(False)
-        # self.playButton.setFixedHeight(24)
-        # self.playButton.setIconSize(QSize(10, 10))
-        # self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
-        # self.playButton.clicked.connect(self.togglePlay)
+        self.playButton = QPushButton()
+        self.playButton.setEnabled(False)
+        self.playButton.setFixedHeight(24)
+        self.playButton.setIconSize(QSize(10, 10))
+        self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        self.playButton.clicked.connect(self.togglePlay)
 
         # Time slider
         self.positionSlider = QSliderMarker(Qt.Horizontal)
@@ -82,7 +82,7 @@ class VideoPlayer(QWidget):
         # Controls layout [open, play and slider]
         controlLayout = QHBoxLayout()
         controlLayout.setContentsMargins(0, 0, 0, 0)
-        # controlLayout.addWidget(self.playButton)
+        controlLayout.addWidget(self.playButton)
         controlLayout.addWidget(self.positionSlider)
         controlLayout.addWidget(self.timeLabel)
 
@@ -113,7 +113,7 @@ class VideoPlayer(QWidget):
         # print(position)
         # mseconds = position % 60000
         seconds = position // 1000
-        return "{:02d}:{:02d}:{:02d}".format(seconds // 60, seconds % 60, position % 1000)
+        return "{:02d}:{:02d}:{:02d}".format(seconds // 60, seconds % 60, position % 1000 // 10 )
 
     def openEditWindow(self, splitId):
         config = self.videoEditor.get_split_config(splitId)
@@ -123,18 +123,15 @@ class VideoPlayer(QWidget):
     def loadVideoFile(self):
         fileName, _ = QFileDialog.getOpenFileName(self, "Choose video file", ".",
                                                   "Video Files (*.mp4 *.flv *.ts *.mkv *.avi)")
-        # fileName = QFileDialog.getOpenFileUrl()[0]
         print(fileName)
         if fileName != '':
             self.videoPath = fileName
             self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(fileName)))
-            # self.mediaPlayer.setMedia(QMediaContent(fileName))
-            # self.playButton.setEnabled(True)
+            self.playButton.setEnabled(True)
             self.splitButton.setEnabled(True)
             # self.exportAllButton.setEnabled(True)
             self.statusBar.showMessage(fileName)
             self.positionSlider.update()
-            # self.mediaPlayer.play()
             self.mediaPlayer.pause()
             # self.togglePlay()
 
@@ -147,7 +144,7 @@ class VideoPlayer(QWidget):
 
         splitTimes = []
         for i, split in enumerate(self.videoEditor.get_splits()):
-            splitWgt = SplitWidget(self, i)
+            splitWgt = SplitWidget(self, i, split)
             splitWgt.setToolTip("{} - {}".format(self.positionToString(split.start_time),
                                                  self.positionToString(split.end_time)))
             splitWgt.setMinimumWidth(4)
@@ -260,16 +257,18 @@ class QSliderMarker(QSlider):
 
 class SplitWidget(QPushButton):
 
-    def __init__(self, parent, splitId):
+    def __init__(self, parent, splitId, split):
         super().__init__(parent)
         self.marked = False
         self.textOptions = ['✗', '✓']
         self.splitId = splitId
+        self.split = split
         self.toggleMark()
 
     def toggleMark(self):
         self.marked ^= True
-        newText = self.textOptions[int(self.marked)]
+        # newText = self.textOptions[int(self.marked)]
+        newText = self.split.get_split_time()
         self.setText(newText)
 
     def contextMenuEvent(self, event):
@@ -281,7 +280,7 @@ class SplitWidget(QPushButton):
             leftMerge = menu.addAction("Merge with left")
         # mark = menu.addAction("Unselect" if self.marked else "Select")
         # edit = menu.addAction("Edit")
-        save = menu.addAction("Save to file")
+        save = menu.addAction("Save to Webp")
         action = menu.exec_(self.mapToGlobal(event.pos()))
         if action == rightMerge:
             self.parent().videoEditor.merge_split_with_next(self.splitId)
@@ -290,9 +289,9 @@ class SplitWidget(QPushButton):
             self.parent().videoEditor.merge_split_with_previous(self.splitId)
             self.parent().updateSplitsGUI()
         if action == save:
-            videoExtension = self.parent().videoPath.split(".")[-1]
+            # videoExtension = self.parent().videoPath.split(".")[-1]
             fileName, _ = QFileDialog.getSaveFileName(self, "Choose video file", ".",
-                                                      "Video Files (*.{})".format(videoExtension))
+                                                      "Video Files (*.{})".format('webp'))
             if fileName:
                 t = threading.Thread(target=self.exportSplit, args=(fileName, ))
                 t.setDaemon(True)
@@ -307,8 +306,8 @@ class SplitWidget(QPushButton):
         self.setDisabled(True)
         self.setText('⌛')
         self.parent().videoEditor.export_split(self.splitId, filename)
-        textStatus = self.textOptions[int(self.marked)]
-        self.setText(textStatus)
+        # textStatus = self.textOptions[int(self.marked)]
+        self.setText(self.split.get_split_time())
         self.setDisabled(False)
 
 

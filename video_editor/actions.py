@@ -43,7 +43,7 @@ class WebpAction(BaseAction):
 
     def run(self):
         cmd = '{ffmpeg} -ss {s} -to {d} -i "{fn}" ' \
-              '-vcodec libwebp -r 20  -lossless 1  -loop 0 -preset default -an -vsync 0 -vf scale=480:-1  ' \
+              '-vcodec libwebp -r 20  -lossless 0 -compression_level 2 -q:v 50  -loop 0 -preset photo -an -vsync 0 -vf scale=480:-1  ' \
               '"{o}"'.format(
             ffmpeg=get_ffmpeg_binary(),
             fn=self.input,
@@ -52,7 +52,9 @@ class WebpAction(BaseAction):
             # re="" if self.reencode else "-c copy",
             o=self.output,
         )
+        print(cmd)
         return run_command(cmd)
+
 
 class CompressAction(BaseAction):
 

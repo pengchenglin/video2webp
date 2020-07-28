@@ -13,6 +13,7 @@ class VideoEditor:
 
     def add_split(self, time):
         # Find new split position
+        print(self.splits)
         k = len(self.splits)
         for i, split in enumerate(self.splits):
             if split.end_time > time:
@@ -99,6 +100,9 @@ class Split:
         def add_extension(path):
             return "{}.{}".format(path, video_extension)
 
+        def webp_extension(path):
+            return "{}.{}".format(path,'webp')
+
         # Get config values
         conf_reencode = True if force_reencode else self.config.get('reencode', False)
         conf_compress = self.config.get('compress', False)
@@ -108,15 +112,18 @@ class Split:
         # Get video extension and name
         *video_name, video_extension = self.video_path.split('/')[-1].split(".")
         video_name = ".".join(video_name)
+        print('%s-------'% video_name)
 
         # Create temp folder
         with tempfile.TemporaryDirectory() as dir_path:
             dir_path = dir_path.replace("\\", "/")
             tmp_output_path = "{}/{}_{}_{}".format(dir_path, video_name, self.start_time, self.end_time)
+            print('____%s tmp path'% tmp_output_path)
 
             # Cut split
-            action = CutAction(self.video_path, add_extension(tmp_output_path),
-                               self.start_time, self.end_time, reencode=conf_reencode)
+            # action = CutAction(self.video_path, add_extension(tmp_output_path),
+            #                    self.start_time, self.end_time, reencode=conf_reencode)
+            action = WebpAction(self.video_path, webp_extension(tmp_output_path), self.start_time, self.end_time)
             succ, msg = action.run()
             if not succ:
                 return print("CUT ACTION FAILED\n", msg)
@@ -151,12 +158,16 @@ class Split:
                     return print("SPEEDUP ACTION FAILED\n", msg)
 
             # Copy final video to output path
-            copyfile(add_extension(tmp_output_path), output_path)
+            copyfile(webp_extension(tmp_output_path), output_path)
 
     def copy(self):
         split_copy = Split(self.video_path, self.start_time, self.end_time)
         split_copy.config = self.config
         return split_copy
+
+    def get_split_time(self):
+        seconds = self.end_time-self.start_time
+        return "{:.2f}".format(seconds / 1000)
 
 
 
