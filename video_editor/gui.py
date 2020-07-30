@@ -8,6 +8,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets,QtMultimedia,QtMultimediaWidgets
 
 from video_editor.editor import VideoEditor
 import threading
+from urllib import parse
 
 
 class VideoPlayer(QWidget):
@@ -123,7 +124,6 @@ class VideoPlayer(QWidget):
     def loadVideoFile(self):
         fileName, _ = QFileDialog.getOpenFileName(self, "Choose video file", ".",
                                                   "Video Files (*.mp4 *.flv *.ts *.mkv *.avi)")
-        print(fileName)
         if fileName != '':
             self.videoPath = fileName
             self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(fileName)))

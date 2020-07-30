@@ -1,122 +1,77 @@
-from PyQt5.QtWidgets import QProgressBar, QDialogButtonBox, QDialog, QInputDialog, QProgressBar, QApplication, QLabel, QMainWindow, QVBoxLayout, QWidget, QPushButton, QTableWidget, QTableWidgetItem, QListWidget, QListWidgetItem, QSlider
-from PyQt5.QtCore import Qt
+import sys
+import os
+
+from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import QUrl, QFile, QIODevice,  QBuffer
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlaylist, QMediaPlayer
+from PyQt5.QtMultimediaWidgets import QVideoWidget
+from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 
-class MyApp(QMainWindow):
-    def __init__(self):
-        super(MyApp, self).__init__()
-        self.mainUI()
-        self.setLayout()
-        self.setWindowTitle("List App")
-        self.setFixedSize(500, 300)
-        self.setCentralWidget(self.setWidget)
+class SimplePlayer(QMainWindow):
+    """
+    Extremely simple video player using QMediaPlayer
+    Consists of vertical layout, widget, and a QLabel
+    """
 
-    def mainUI(self):
-        self.list = QListWidget()
-        self.buttonAddItem = QPushButton("Add Item")
-        self.buttonRemoveItem = QPushButton("Remove Item")
-        self.buttonUpdateItem = QPushButton("update Item")
-        self.buttonClearAllItem = QPushButton("clear all Item")
-        self.buttonDuplicateItem = QPushButton("duplicate Item")
+    def __init__(self, master=None):
+        QMainWindow.__init__(self, master)
 
-        # logic for progresss Bar
-        self.buttonAddItem.clicked.connect(self.setInput)
-        self.buttonRemoveItem.clicked.connect(self.setRemove)
-        self.buttonClearAllItem.clicked.connect(self.setClear)
-        self.buttonUpdateItem.clicked.connect(self.setUpdate)
+        # Define file variables
+        self.playlist_files = ['/Users/linpengcheng/Desktop/video-editor-master/video_editor/Countdown1.mp4', '/Users/linpengcheng/Desktop/video-editor-master/video_editor/Countdown2.mp4']
 
-        # logic for slider
-        self.buttonDuplicateItem.clicked.connect(self.setDuplicate)
+        # Define the ui-specific variables we're going to use
+        self.vertical_box_layout = QVBoxLayout()
+        self.central_widget = QWidget(self)
+        self.video_frame = QVideoWidget()
 
-        self.slider = QSlider(Qt.Horizontal)
-        self.progressbar = QProgressBar()
+        # Define the media player related information
+        self.playlist = QMediaPlaylist()
+        self.video_player = QMediaPlayer(flags=QMediaPlayer.VideoSurface)
 
-    def setLayout(self):
-        self.layoutList = QVBoxLayout()
-        self.layoutList.addWidget(self.list)
-        self.layoutList.addWidget(self.buttonAddItem)
-        self.layoutList.addWidget(self.buttonRemoveItem)
-        self.layoutList.addWidget(self.buttonUpdateItem)
-        self.layoutList.addWidget(self.buttonClearAllItem)
-        self.layoutList.addWidget(self.buttonDuplicateItem)
-        self.layoutList.addWidget(self.slider)
-        self.layoutList.addWidget(self.progressbar)
+        # Create the user interface, set up the player, and play the 2 videos
+        self.create_user_interface()
+        self.video_player_setup()
 
-        self.setWidget = QWidget()
-        self.setWidget.setLayout(self.layoutList)
+    def video_player_setup(self):
+        """Sets media list for the player and then sets output to the video frame"""
+        self.video_player.setVideoOutput(self.video_frame)
 
-    def setDialog(self):
+        self.set_buffer()
+        # self.set_playlist()
+        self.video_player.play()
 
-        self.dialog = QDialog()
-        self.dialog.setFixedSize(400, 200)
-        self.dialog.setWindowTitle("Custom Dialog Box")
+    def set_playlist(self):
+        """Opens a single video file, puts it into a playlist which is read by the QMediaPlayer"""
+        self.playlist.addMedia(QMediaContent(QUrl.fromLocalFile(os.path.abspath(self.playlist_files[0]))))
+        self.playlist.setCurrentIndex(0)
+        self.video_player.setPlaylist(self.playlist)
 
-        self.labelDialog = QLabel("custom label")
-        self.button = QDialogButtonBox.Ok
-        self.buttonBox = QDialogButtonBox(self.button)
-        self.buttonBox.accepted.connect(self.dialog.accept)
+    def set_buffer(self):
+        """Opens a single video file and writes it to a buffer to be read by QMediaPlayer"""
+        media_file_name = os.path.abspath(self.playlist_files[0])
+        media_file = QFile(media_file_name)
+        media_file.open(QIODevice.ReadOnly)
 
-        self.layoutDialog = QVBoxLayout()
-        self.layoutDialog.addWidget(self.labelDialog)
-        self.layoutDialog.addWidget(self.buttonBox)
+        byte_array = media_file.readAll()
+        buffer = QBuffer(byte_array)
+        buffer.setData(byte_array)
 
-        self.dialog.setLayout(self.layoutDialog)
-        self.dialog.exec_()
+        buffer.open(QIODevice.ReadOnly)
 
-    # logic dialog
+        self.video_player.setMedia(QMediaContent(), buffer)
 
-    def setInput(self):
-        self.inputDialog, ok = QInputDialog.getText(
-            self, "Add to List Item", "Enter Input")
-        if ok == True:
-            if self.inputDialog != "":
-                self.add = QListWidgetItem(self.inputDialog, self.list)
-                self.list.addItem(self.add)
-                self.progressbar.setValue(self.list.count())
-                print(f"check input dialog : {self.inputDialog}")
-        print(ok)
+    def create_user_interface(self):
+        """Create a 1280x720 UI consisting of a vertical layout, central widget, and QLabel"""
+        self.setCentralWidget(self.central_widget)
+        self.vertical_box_layout.addWidget(self.video_frame)
+        self.central_widget.setLayout(self.vertical_box_layout)
 
-    def setRemove(self):
-        listdata_items = self.list.selectedItems()
-        if not listdata_items:
-            return
-        for item in listdata_items:
-            self.list.takeItem(self.list.row(item))
-            self.progressbar.setValue(self.list.count())
-
-    def setClear(self):
-        self.list.clear()
-        self.progressbar.setValue(self.list.count())
-
-    def setUpdate(self):
-        dialog_update = QInputDialog()
-        listdata_selected = self.list.selectedItems()
-        index = ['%s' % (i.text()) for i in listdata_selected]
-
-        result, ok = dialog_update.getText(
-            self, "Update List Item", "Update List", text=index[0])
-
-        if ok == True and result != "":
-            for item in listdata_selected:
-                self.list.item(
-                    self.list.row(item)).setText(result)
-        self.progressbar.setValue(self.list.count())
-
-    def setDuplicate(self):
-        range_itemselected = self.valuesitem_slider()
-        listdata_selected = ['%s' % (i.text())
-                             for i in self.list.selectedItems()]
-        for x in range(range_itemselected):
-            QListWidgetItem(listdata_selected[0], self.list)
-            self.progressbar.setValue(self.list.count())
-        self.progressbar.setValue(self.list.count())
-
-    def valuesitem_slider(self):
-        return self.slider.value()
+        self.resize(1280, 720)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app = QApplication([])
-    window = MyApp()
-    window.show()
-    app.exec_()
+    player = SimplePlayer()
+    player.show()
+    sys.exit(app.exec_())

@@ -1,6 +1,8 @@
 from subprocess import Popen, PIPE
 import shlex
 import pathlib
+import os
+import sys
 
 
 def run_command(command_line, shell=False):
@@ -23,12 +25,18 @@ def get_ffmpeg_binary():
             return True
 
     cmds = [
-        "ffmpeg",
-        "./ffmpeg",
-        "{}/ffmpeg".format(str(pathlib.Path(__file__).parent.absolute()).replace("\\", "/"))
+        # "ffmpeg",
+        # "./ffmpeg",
+        # "{}/ffmpeg".format(str(pathlib.Path(__file__).parent.absolute()).replace("\\", "/"))
+        "{}/ffmpeg".format(str(os.path.dirname(sys.executable)).replace("\\", "/"))
     ]
 
     for cmd in cmds:
         if try_command(cmd):
+            print(cmd)
             return cmd
     raise SystemError("FFMPEG not found")
+
+
+if __name__ == '__main__':
+    print(get_ffmpeg_binary())

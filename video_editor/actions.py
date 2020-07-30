@@ -42,8 +42,9 @@ class WebpAction(BaseAction):
         self.end_time = end_time
 
     def run(self):
-        cmd = '{ffmpeg} -ss {s} -to {d} -i "{fn}" ' \
-              '-vcodec libwebp -r 20  -lossless 0 -compression_level 2 -q:v 50  -loop 0 -preset photo -an -vsync 0 -vf scale=480:-1  ' \
+        # '-vcodec libwebp -r 20  -lossless 0 -compression_level 2 -q:v 50  -loop 0 -preset photo -an -vsync 0 -vf scale=480:-1  '
+        cmd = '{ffmpeg}  -i "{fn}" -ss {s} -to {d} ' \
+              '-vcodec libwebp -lossless 0 -qscale 50 -preset default -loop 0 -vf scale=300:-1,fps=10 -an -vsync 0 ' \
               '"{o}"'.format(
             ffmpeg=get_ffmpeg_binary(),
             fn=self.input,
