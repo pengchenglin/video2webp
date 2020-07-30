@@ -13,7 +13,7 @@ class VideoEditor:
 
     def add_split(self, time):
         # Find new split position
-        print(self.splits)
+        # print(self.splits)
         k = len(self.splits)
         for i, split in enumerate(self.splits):
             if split.end_time > time:

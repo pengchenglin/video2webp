@@ -28,6 +28,7 @@ def get_ffmpeg_binary():
         # "ffmpeg",
         # "./ffmpeg",
         # "{}/ffmpeg".format(str(pathlib.Path(__file__).parent.absolute()).replace("\\", "/"))
+
         "{}/ffmpeg".format(str(os.path.dirname(sys.executable)).replace("\\", "/"))
     ]
 
