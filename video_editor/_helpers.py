@@ -25,11 +25,11 @@ def get_ffmpeg_binary():
             return True
 
     cmds = [
-        # "ffmpeg",
-        # "./ffmpeg",
-        # "{}/ffmpeg".format(str(pathlib.Path(__file__).parent.absolute()).replace("\\", "/"))
+        "ffmpeg",
+        "./ffmpeg",
+        "{}/ffmpeg".format(str(pathlib.Path(__file__).parent.absolute()).replace("\\", "/"))
 
-        "{}/ffmpeg".format(str(os.path.dirname(sys.executable)).replace("\\", "/"))
+        # "{}/ffmpeg".format(str(os.path.dirname(sys.executable)).replace("\\", "/"))
     ]
 
     for cmd in cmds:
@@ -39,5 +39,4 @@ def get_ffmpeg_binary():
     raise SystemError("FFMPEG not found")
 
 
-if __name__ == '__main__':
-    print(get_ffmpeg_binary())
+

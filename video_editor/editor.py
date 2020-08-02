@@ -1,7 +1,10 @@
-from video_editor.actions import CutAction, CompressAction, RemoveAudioAction, SpeedupAction,WebpAction
+# from video_editor.actions import CutAction, CompressAction, RemoveAudioAction, SpeedupAction,WebpAction,ExportAuidoAction,GifAction
+from video_editor.actions import WebpAction,ExportAuidoAction,GifAction
 from video_editor.utils import join_video_list
 import tempfile
 from shutil import copyfile
+import os
+import time
 
 
 class VideoEditor:
@@ -49,26 +52,33 @@ class VideoEditor:
         removed_split = self.splits.pop(split_id - 1)
         split.start_time = removed_split.start_time
 
-    def export_split(self, split_id, output_file):
-        self.splits[split_id].export(output_file)
+    def export_split_webp(self, split_id):
+        self.splits[split_id].export('webp')
 
-    def export_and_join_splits(self, split_ids, output_file):
-        *_, video_extension = self.video_path.split('/')[-1].split(".")
+    def export_split_gif(self, split_id):
+        self.splits[split_id].export('gif')
 
-        with tempfile.TemporaryDirectory() as dir_path:
-            dir_path = dir_path.replace("\\", "/")
-            list_file_path = "{}/list_file.txt".format(dir_path)
+    # def export_and_join_splits(self, split_ids, output_file):
+    #     *_, video_extension = self.video_path.split('/')[-1].split(".")
+    #
+    #     with tempfile.TemporaryDirectory() as dir_path:
+    #         dir_path = dir_path.replace("\\", "/")
+    #         list_file_path = "{}/list_file.txt".format(dir_path)
+    #
+    #         with open(list_file_path, "wt") as list_file:
+    #
+    #             for split_id in split_ids:
+    #                 split_tmp_output = "{}/{}.{}".format(dir_path, split_id, video_extension)
+    #                 self.splits[split_id].export(split_tmp_output, force_reencode=True)
+    #                 list_file.write('file {}.{}\n'.format(split_id, video_extension))
+    #
+    #         succ, msg = join_video_list(list_file_path, output_file)
+    #         if not succ:
+    #             print("JOIN SPLITS FAILED\n", msg)
 
-            with open(list_file_path, "wt") as list_file:
-
-                for split_id in split_ids:
-                    split_tmp_output = "{}/{}.{}".format(dir_path, split_id, video_extension)
-                    self.splits[split_id].export(split_tmp_output, force_reencode=True)
-                    list_file.write('file {}.{}\n'.format(split_id, video_extension))
-
-            succ, msg = join_video_list(list_file_path, output_file)
-            if not succ:
-                print("JOIN SPLITS FAILED\n", msg)
+    def export_audio(self,output_path):
+        action = ExportAuidoAction(self.video_path,output_path)
+        action.run()
 
 
 class Split:
@@ -96,69 +106,80 @@ class Split:
     def duration(self):
         return self.end_time - self.start_time
 
-    def export(self, output_path, force_reencode=False):
-        def add_extension(path):
-            return "{}.{}".format(path, video_extension)
+    def export(self, act='webp'):
+        def add_extension(file_path, suffix):
+            # folder = os.path.dirname(file_path)
+            # print(folder)
+            # video_name= self.video_path.split('/')[-1].split(".")[0]
+            # print(os.path.join(folder, video_name))
+            fileName = os.path.splitext(file_path)[0] + \
+                       str(time.strftime("%Y%m%d%H%M%S", time.localtime())) + suffix
+            print(fileName)
+            return fileName
 
-        def webp_extension(path):
-            return "{}.{}".format(path,'webp')
+        if act == 'webp':
+            action = WebpAction(self.video_path, add_extension(self.video_path, '.webp'),
+                                self.start_time, self.end_time)
+        elif act == 'gif':
+            action = GifAction(self.video_path, add_extension(self.video_path, '.gif'),
+                               self.start_time, self.end_time)
+        succ, msg = action.run()
+        if not succ:
+            return print("CUT ACTION FAILED\n", msg)
 
-        # Get config values
-        conf_reencode = True if force_reencode else self.config.get('reencode', False)
-        conf_compress = self.config.get('compress', False)
-        conf_remove_audio = self.config.get('removeaudio', False)
-        conf_speedup = self.config.get('speedup', False)
+        # # Get config values
+        # conf_reencode = True if force_reencode else self.config.get('reencode', False)
+        # conf_compress = self.config.get('compress', False)
+        # conf_remove_audio = self.config.get('removeaudio', False)
+        # conf_speedup = self.config.get('speedup', False)
 
-        # Get video extension and name
-        *video_name, video_extension = self.video_path.split('/')[-1].split(".")
-        video_name = ".".join(video_name)
-        print('%s-------'% video_name)
-
-        # Create temp folder
-        with tempfile.TemporaryDirectory() as dir_path:
-            dir_path = dir_path.replace("\\", "/")
-            tmp_output_path = "{}/{}_{}_{}".format(dir_path, video_name, self.start_time, self.end_time)
-            print('____%s tmp path'% tmp_output_path)
+        # # Get video extension and name
+        # *video_name, video_extension = self.video_path.split('/')[-1].split(".")
+        # video_name = ".".join(video_name)
+        # print(video_name)
+        # # Create temp folder
+        # with tempfile.TemporaryDirectory() as dir_path:
+            # dir_path = dir_path.replace("\\", "/")
+            # tmp_output_path = "{}/{}_{}_{}".format(dir_path, video_name, self.start_time, self.end_time)
 
             # Cut split
             # action = CutAction(self.video_path, add_extension(tmp_output_path),
             #                    self.start_time, self.end_time, reencode=conf_reencode)
-            action = WebpAction(self.video_path, webp_extension(tmp_output_path), self.start_time, self.end_time)
-            succ, msg = action.run()
-            if not succ:
-                return print("CUT ACTION FAILED\n", msg)
 
-            # Compress split
-            if conf_compress:
-                input_path = add_extension(tmp_output_path)
-                tmp_output_path += '_C'
-                action = CompressAction(input_path, add_extension(tmp_output_path))
-                succ, msg = action.run()
-                if not succ:
-                    return print("COMPRESS ACTION FAILED\n", msg)
 
-            # Remove audio from split
-            if conf_remove_audio:
-                input_path = add_extension(tmp_output_path)
-                tmp_output_path += '_NA'
-                action = RemoveAudioAction(input_path, add_extension(tmp_output_path))
-                succ, msg = action.run()
-                if not succ:
-                    return print("REMOVE AUDIO ACTION FAILED\n", msg)
 
-            # Speedup split
-            if conf_speedup and isinstance(conf_speedup, dict):
-                factor = self.config['speedup'].get('factor', 1)
-                drop_frames = self.config['speedup'].get('dropframes', True)
-                input_path = add_extension(tmp_output_path)
-                tmp_output_path += '_SU'
-                action = SpeedupAction(input_path, add_extension(tmp_output_path), factor, drop_frames)
-                succ, msg = action.run()
-                if not succ:
-                    return print("SPEEDUP ACTION FAILED\n", msg)
+            # # Compress split
+            # if conf_compress:
+            #     input_path = add_extension(tmp_output_path)
+            #     tmp_output_path += '_C'
+            #     action = CompressAction(input_path, add_extension(tmp_output_path))
+            #     succ, msg = action.run()
+            #     if not succ:
+            #         return print("COMPRESS ACTION FAILED\n", msg)
+            #
+            # # Remove audio from split
+            # if conf_remove_audio:
+            #     input_path = add_extension(tmp_output_path)
+            #     tmp_output_path += '_NA'
+            #     action = RemoveAudioAction(input_path, add_extension(tmp_output_path))
+            #     succ, msg = action.run()
+            #     if not succ:
+            #         return print("REMOVE AUDIO ACTION FAILED\n", msg)
+            #
+            # # Speedup split
+            # if conf_speedup and isinstance(conf_speedup, dict):
+            #     factor = self.config['speedup'].get('factor', 1)
+            #     drop_frames = self.config['speedup'].get('dropframes', True)
+            #     input_path = add_extension(tmp_output_path)
+            #     tmp_output_path += '_SU'
+            #     action = SpeedupAction(input_path, add_extension(tmp_output_path), factor, drop_frames)
+            #     succ, msg = action.run()
+            #     if not succ:
+            #         return print("SPEEDUP ACTION FAILED\n", msg)
 
             # Copy final video to output path
-            copyfile(webp_extension(tmp_output_path), output_path)
+            # copyfile(webp_extension(tmp_output_path), output_path)
+
 
     def copy(self):
         split_copy = Split(self.video_path, self.start_time, self.end_time)
