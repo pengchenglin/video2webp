@@ -41,7 +41,6 @@ def get_ffmpeg_binary():
     # print(cmds)
     for cmd in cmds:
         if try_command(cmd):
-            print(cmd)
             return cmd
     raise SystemError("FFMPEG not found")
 

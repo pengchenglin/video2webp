@@ -110,9 +110,10 @@ class VideoPlayer(QWidget):
 
         timeLayout = QHBoxLayout()
         timeLayout.setContentsMargins(0, 0, 0, 0)
-        # timeLayout.addWidget(openButton)
         timeLayout.addWidget(self.playButton)
         timeLayout.addStretch(1)  # 增加伸缩量
+        # timeLayout.addWidget(openButton)
+        # timeLayout.addStretch(1)  # 增加伸缩量
         timeLayout.addWidget(self.timeLabel)
 
         # Controls layout [open, play and slider]
@@ -180,8 +181,9 @@ class VideoPlayer(QWidget):
             # self.exportAllButton.setEnabled(True)
             self.statusBar.showMessage(fileName)
             self.positionSlider.update()
+            self.togglePlay()
             self.mediaPlayer.pause()
-            # self.togglePlay()
+
 
     def dragEnterEvent(self, event):  # 拖动开始时，以及刚进入目标控件时调用
         event.acceptProposedAction()  # 必须要有
@@ -206,8 +208,10 @@ class VideoPlayer(QWidget):
                     # self.exportAllButton.setEnabled(True)
                     self.statusBar.showMessage(fileName)
                     self.positionSlider.update()
+                    self.togglePlay()
                     self.mediaPlayer.pause()
-                    # self.togglePlay()
+                    self.updateSplitsGUI()
+
             except:
                 pass
         else:
@@ -316,7 +320,7 @@ class VideoPlayer(QWidget):
         self.positionSlider.setRange(0, duration)
         self.timeLabel.setText("00:00:00")
         self.videoDuration = duration
-        self.videoEditor = VideoEditor(self.videoTmpPath, self.videoDuration)
+        self.videoEditor = VideoEditor(self.videoTmpPath, self.videoDuration, self.videoPath)
         self.updateSplitsGUI()
 
     def setPosition(self, position):

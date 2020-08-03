@@ -9,10 +9,11 @@ import time
 
 class VideoEditor:
 
-    def __init__(self, video_path, video_length):
+    def __init__(self, video_path, video_length, real_path):
         self.video_path = video_path
+        self.real_path = real_path
         self.video_length = video_length
-        self.splits = [Split(video_path, 0, video_length)]
+        self.splits = [Split(video_path, 0, video_length,real_path)]
 
     def add_split(self, time):
         # Find new split position
@@ -100,10 +101,11 @@ class Split:
     }
     """
 
-    def __init__(self, video_path, start_time, end_time):
+    def __init__(self, video_path, start_time, end_time,real_path):
         self.video_path = video_path
         self.start_time = start_time
         self.end_time = end_time
+        self.real_path = real_path
         self.config = dict()
 
     @property
@@ -118,18 +120,27 @@ class Split:
             # print(os.path.join(folder, video_name))
             fileName = os.path.splitext(file_path)[0] + \
                        str(time.strftime("%Y%m%d%H%M%S", time.localtime())) + suffix
-            print(fileName)
+            # print(fileName)
             return fileName
 
         if act == 'webp':
-            action = WebpAction(self.video_path, add_extension(self.video_path, '.webp'),
+            tmp_out = add_extension(self.video_path, '.webp')
+            out = add_extension(self.real_path, '.webp')
+            action = WebpAction(self.video_path, tmp_out,
                                 self.start_time, self.end_time)
+            succ, msg = action.run()
         elif act == 'gif':
-            action = GifAction(self.video_path, add_extension(self.video_path, '.gif'),
+            tmp_out = add_extension(self.video_path, '.gif')
+            out = add_extension(self.real_path, '.gif')
+            action = GifAction(self.video_path, tmp_out,
                                self.start_time, self.end_time)
-        succ, msg = action.run()
+            succ, msg = action.run()
+
         if not succ:
             return print("CUT ACTION FAILED\n", msg)
+
+        copyfile(tmp_out, out)
+
 
         # # Get config values
         # conf_reencode = True if force_reencode else self.config.get('reencode', False)
@@ -186,7 +197,7 @@ class Split:
 
 
     def copy(self):
-        split_copy = Split(self.video_path, self.start_time, self.end_time)
+        split_copy = Split(self.video_path, self.start_time, self.end_time,self.real_path)
         split_copy.config = self.config
         return split_copy
 

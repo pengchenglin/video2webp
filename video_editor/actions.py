@@ -57,7 +57,6 @@ class WebpAction(BaseAction):
         print(cmd)
         return run_command(cmd)
 
-
 class GifAction(BaseAction):
     def __init__(self, input_path, output_path, start_time, end_time):
         super().__init__(input_path, output_path)
@@ -112,6 +111,7 @@ class GifAction(BaseAction):
         if os.path.exists(palette):
             os.remove(palette)
         return run
+
 
 
 class ExportAuidoAction(BaseAction):
