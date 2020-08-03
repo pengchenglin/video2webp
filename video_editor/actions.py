@@ -2,9 +2,10 @@ from video_editor._helpers import get_ffmpeg_binary, run_command
 from abc import ABC, abstractmethod
 from math import log2, floor
 import os
+import ffmpeg
+
 
 class BaseAction(ABC):
-
     def __init__(self, input_path, output_path):
         self.input = input_path
         self.output = output_path
@@ -65,51 +66,51 @@ class GifAction(BaseAction):
 
     def run(self):
 
-        # '-vcodec libwebp -r 20  -lossless 0 -compression_level 2 -q:v 50  -loop 0 -preset photo -an -vsync 0 -vf scale=480:-1  '
-        # cmd = '{ffmpeg}  -i "{fn}" -ss {s} -to {d} -vf scale=200:-1,fps=10  -an -vsync 0 "{o}"'.format(
-        #     ffmpeg=get_ffmpeg_binary(),
-        #     fn=self.input,
-        #     s=get_time_str(self.start_time),
-        #     d=get_time_str(self.end_time),
-        #     # re="" if self.reencode else "-c copy",
-        #     o=self.output,
-        # )
-        # print(cmd)
-        # return run_command(cmd)
-
-        '''
-        'http://www.unixlinux.online/unixlinux/linuxjc/linuxjc/201702/19148.html'
-        'http://ffmpeg.org/ffmpeg-filters.html#palettegen'
-        'https://ffmpeg.org/ffmpeg-scaler.html'
-        '''
-        palette = os.path.join(os.path.dirname(self.input), "palette.png")
-        filters = "fps=10,scale=%s:flags=bicubic" % make_scale(self.input)
-        palette_cmd = '{ffmpeg}  -ss {s} -to {d} -i "{fn}"  ' \
-                      '-vf "{filters},palettegen" -y {palette}'.format(
-                        ffmpeg=get_ffmpeg_binary(),
-                        fn=self.input,
-                        s=get_time_str(self.start_time),
-                        d=get_time_str(self.end_time),
-                        filters=filters,
-                        palette=palette,
-        )
-        print(palette_cmd)
-        run_command(palette_cmd)
-        cmd = '{ffmpeg}  -ss {s} -to {d} -i "{fn}" -i "{palette}"  ' \
-              '-lavfi "{filters} [x]; [x][1:v] paletteuse" -y "{o}"'.format(
-                    ffmpeg=get_ffmpeg_binary(),
-                    fn=self.input,
-                    s=get_time_str(self.start_time),
-                    d=get_time_str(self.end_time),
-                    filters=filters,
-                    palette=palette,
-                    o=self.output,
+        '-vcodec libwebp -r 20  -lossless 0 -compression_level 2 -q:v 50  -loop 0 -preset photo -an -vsync 0 -vf scale=480:-1  '
+        cmd = '{ffmpeg}  -i "{fn}" -ss {s} -to {d} -vf scale=200:-1,fps=10  -an -vsync 0 "{o}"'.format(
+            ffmpeg=get_ffmpeg_binary(),
+            fn=self.input,
+            s=get_time_str(self.start_time),
+            d=get_time_str(self.end_time),
+            # re="" if self.reencode else "-c copy",
+            o=self.output,
         )
         print(cmd)
-        run = run_command(cmd)
-        if os.path.exists(palette):
-            os.remove(palette)
-        return run
+        return run_command(cmd)
+
+        # '''
+        # 'http://www.unixlinux.online/unixlinux/linuxjc/linuxjc/201702/19148.html'
+        # 'http://ffmpeg.org/ffmpeg-filters.html#palettegen'
+        # 'https://ffmpeg.org/ffmpeg-scaler.html'
+        # '''
+        # palette = os.path.join(os.path.dirname(self.input), "palette.png")
+        # filters = "fps=10,scale=%s:flags=bicubic" % make_scale(self.input)
+        # palette_cmd = '{ffmpeg}  -ss {s} -to {d} -i "{fn}"  ' \
+        #               '-vf "{filters},palettegen" -y {palette}'.format(
+        #                 ffmpeg=get_ffmpeg_binary(),
+        #                 fn=self.input,
+        #                 s=get_time_str(self.start_time),
+        #                 d=get_time_str(self.end_time),
+        #                 filters=filters,
+        #                 palette=palette,
+        # )
+        # print(palette_cmd)
+        # run_command(palette_cmd)
+        # cmd = '{ffmpeg}  -ss {s} -to {d} -i "{fn}" -i "{palette}"  ' \
+        #       '-lavfi "{filters} [x]; [x][1:v] paletteuse" -y "{o}"'.format(
+        #             ffmpeg=get_ffmpeg_binary(),
+        #             fn=self.input,
+        #             s=get_time_str(self.start_time),
+        #             d=get_time_str(self.end_time),
+        #             filters=filters,
+        #             palette=palette,
+        #             o=self.output,
+        # )
+        # print(cmd)
+        # run = run_command(cmd)
+        # if os.path.exists(palette):
+        #     os.remove(palette)
+        # return run
 
 
 class ExportAuidoAction(BaseAction):
@@ -122,6 +123,22 @@ class ExportAuidoAction(BaseAction):
             fn=self.input,
             o=self.output,
         )
+        return run_command(cmd)
+
+
+class ExportJpgAction(BaseAction):
+    def __init__(self, input_path, output_path, position):
+        super().__init__(input_path, output_path)
+        self.p = position
+
+    def run(self):
+        cmd = '{ffmpeg}  -i "{fn}" -f  image2  -ss {draction} -vframes 1 "{o}"'.format(
+            ffmpeg=get_ffmpeg_binary(),
+            fn=self.input,
+            draction=get_time_str(self.p),
+            o=self.output,
+        )
+        print(cmd)
         return run_command(cmd)
 
 
@@ -187,14 +204,13 @@ def get_time_str(time):
 
 
 def get_video_size(movie_path):
-    import ffmpeg
     probe = ffmpeg.probe(movie_path)
     video_streams = [stream for stream in probe["streams"] if stream["codec_type"] == "video"]
     return video_streams[0]['width'], video_streams[0]['height']
 
 
 def make_scale(movie_path,scale=400):
-    video_size =get_video_size(movie_path)
+    video_size = get_video_size(movie_path)
     if video_size[0] < video_size[1]:
         return '-1:%s' % scale
     else:

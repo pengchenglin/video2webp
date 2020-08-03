@@ -8,6 +8,7 @@ from video_editor.editor import VideoEditor
 import threading
 import os
 import time
+import ffmpeg
 
 
 class VideoPlayer(QWidget):
@@ -81,6 +82,14 @@ class VideoPlayer(QWidget):
         self.exportAudioButton.setFixedHeight(24)
         self.exportAudioButton.clicked.connect(self.exportAuido)
 
+        # Export JPG button
+        self.exportJPGButton = QPushButton("截取当前图片")
+        self.exportJPGButton.setToolTip("将当前时间点的画面保存为")
+        self.exportJPGButton.setEnabled(True)
+        self.exportJPGButton.setFixedHeight(24)
+        print(self.mediaPlayer.position())
+        self.exportJPGButton.clicked.connect(self.exportJPG)
+
         # Status bar
         self.statusBar = QStatusBar()
         self.statusBar.setFixedHeight(24)
@@ -102,6 +111,7 @@ class VideoPlayer(QWidget):
         editorLayout.addWidget(self.splitButton)
 
         editorLayout.addStretch(100)  # 增加伸缩量
+        editorLayout.addWidget(self.exportJPGButton)
         editorLayout.addWidget(self.exportAudioButton)
         editorLayout.addWidget(self.timeLabel)
         # editorLayout.addWidget(self.exportAllButton)
@@ -142,6 +152,7 @@ class VideoPlayer(QWidget):
             self.playButton.setEnabled(True)
             self.splitButton.setEnabled(True)
             self.exportAudioButton.setEnabled(True)
+            self.exportJPGButton.setEnabled(True)
             # self.exportAllButton.setEnabled(True)
             self.statusBar.showMessage(fileName)
             self.positionSlider.update()
@@ -163,6 +174,7 @@ class VideoPlayer(QWidget):
                     self.playButton.setEnabled(True)
                     self.splitButton.setEnabled(True)
                     self.exportAudioButton.setEnabled(True)
+                    self.exportJPGButtonButton.setEnabled(True)
                     # self.exportAllButton.setEnabled(True)
                     self.statusBar.showMessage(fileName)
                     self.positionSlider.update()
@@ -223,6 +235,15 @@ class VideoPlayer(QWidget):
             t.start()
             QMessageBox.information(self, '', '提取音频导出路径为:\n%s' % fileName)
 
+    def exportJPG(self):
+        fileName = os.path.splitext(self.videoPath)[0] + str(time.strftime("%Y%m%d%H%M%S", time.localtime())) + '.jpg'
+        print(self.mediaPlayer.position())
+        if fileName:
+            t = threading.Thread(target=self.generateJPG, args=(fileName, self.mediaPlayer.position(),))
+            t.setDaemon(True)
+            t.start()
+            QMessageBox.information(self, '', '提取音频导出路径为:\n%s' % fileName)
+
     def generateVideo(self, splitIds, filename):
         self.setDisabled(True)
         self.mediaPlayer.pause()
@@ -233,6 +254,12 @@ class VideoPlayer(QWidget):
         self.setDisabled(True)
         self.mediaPlayer.pause()
         self.videoEditor.export_audio(filename)
+        self.setDisabled(False)
+
+    def generateJPG(self, filename, position):
+        self.setDisabled(True)
+        self.mediaPlayer.pause()
+        self.videoEditor.export_jpg(filename, position)
         self.setDisabled(False)
 
     def togglePlay(self):

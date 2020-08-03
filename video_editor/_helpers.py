@@ -5,6 +5,11 @@ import os
 import sys
 
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
+
 def run_command(command_line, shell=False):
     proc = Popen(shlex.split(command_line), stdout=PIPE, stderr=PIPE, shell=shell)
     out, err = proc.communicate()
@@ -25,13 +30,15 @@ def get_ffmpeg_binary():
             return True
 
     cmds = [
-        "ffmpeg",
-        "./ffmpeg",
-        "{}/ffmpeg".format(str(pathlib.Path(__file__).parent.absolute()).replace("\\", "/"))
+        # "ffmpeg",
+        # "./ffmpeg",
+        # "{}/ffmpeg".format(str(pathlib.Path(__file__).parent.absolute()).replace("\\", "/"))
+        # "./ffmpeg"
+        resource_path('ffmpeg')
 
         # "{}/ffmpeg".format(str(os.path.dirname(sys.executable)).replace("\\", "/"))
     ]
-
+    # print(cmds)
     for cmd in cmds:
         if try_command(cmd):
             print(cmd)

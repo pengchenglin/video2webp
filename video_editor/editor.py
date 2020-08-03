@@ -1,5 +1,5 @@
 # from video_editor.actions import CutAction, CompressAction, RemoveAudioAction, SpeedupAction,WebpAction,ExportAuidoAction,GifAction
-from video_editor.actions import WebpAction,ExportAuidoAction,GifAction
+from video_editor.actions import WebpAction,ExportAuidoAction,GifAction,ExportJpgAction
 from video_editor.utils import join_video_list
 import tempfile
 from shutil import copyfile
@@ -78,6 +78,10 @@ class VideoEditor:
 
     def export_audio(self,output_path):
         action = ExportAuidoAction(self.video_path,output_path)
+        action.run()
+
+    def export_jpg(self,output_path,position):
+        action = ExportJpgAction(self.video_path, output_path, position)
         action.run()
 
 
