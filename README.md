@@ -37,3 +37,6 @@ As for now, I have only tested on Windows, but Linux and Mac users should be abl
 Feel free to create a PR for improvements or bug fixes in the code. If you just find a bug but don't 
 want to dig in the code to fix it, open an issue and I will try to take a look at it.
 
+## How to Bulid
+ `pyinstaller -F main.spec`
+
