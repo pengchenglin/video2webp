@@ -5,7 +5,7 @@ block_cipher = None
 
 a = Analysis(['main.py'],
              pathex=['/Users/linpengcheng/Desktop/video-editor-master/video_editor'],
-             binaries=[('/System/Library/Frameworks/Tk.framework/Tk', 'tk'), ('/System/Library/Frameworks/Tcl.framework/Tcl', 'tcl')],
+             binaries=[],
              datas=[('/Users/linpengcheng/Desktop/video-editor-master/video_editor/ffmpeg','.')],
              hiddenimports=[],
              hookspath=[],

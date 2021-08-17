@@ -224,9 +224,15 @@ def get_time_str(time):
 
 
 def get_video_size(movie_path):
-    probe = ffmpeg.probe(movie_path)
-    video_streams = [stream for stream in probe["streams"] if stream["codec_type"] == "video"]
-    return video_streams[0]['width'], video_streams[0]['height']
+    import cv2
+    vcap = cv2.VideoCapture(movie_path)  # 0=camera
+    width = vcap.get(3)  # float `width`
+    height = vcap.get(4)
+    return int(width),int(height)
+    # probe = ffmpeg.probe(movie_path)
+    # video_streams = [stream for stream in probe["streams"] if stream["codec_type"] == "video"]
+    # return video_streams[0]['width'], video_streams[0]['height']
+
 
 
 def make_scale(movie_path, scale=400):
@@ -238,4 +244,4 @@ def make_scale(movie_path, scale=400):
 
 
 if __name__ == '__main__':
-    print(get_video_size('/Users/linpengcheng/Desktop/0611缩略图5-改帧率_AME/方形放大-_1.mp4'))
+    print(get_video_size('/Users/linpengcheng/Desktop/Pexels Videos 2066560.mp4'))
